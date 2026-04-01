@@ -1,9 +1,3 @@
-# digivakil
-
-
-
-
-```markdown
 # ⚖️ Legal Case Search Engine (Azure + SQLite)
 
 A simple search engine for Indian legal case documents using Azure Blob Storage, PDF parsing, and SQLite.
@@ -34,7 +28,6 @@ This project builds a mini legal search system that:
 ## 📂 Project Structure
 
 ```
-
 digivakil/
 │
 ├── app.py                  # Flask API (search endpoint)
@@ -46,7 +39,6 @@ digivakil/
 ├── .env                    # Environment variables (not pushed)
 ├── .gitignore
 └── README.md
-
 ```
 
 ---
@@ -54,7 +46,6 @@ digivakil/
 ## 🔄 Pipeline Flow
 
 ```
-
 Azure Blob Storage (PDFs)
 ↓
 Download PDFs using Azure SDK
@@ -68,8 +59,7 @@ Store in SQLite database
 Flask API
 ↓
 Search results (JSON / UI)
-
-````
+```
 
 ---
 
@@ -78,9 +68,9 @@ Search results (JSON / UI)
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/digivakil.git
+git clone https://github.com/rohanshenoy30/digivakil.git
 cd digivakil
-````
+```
 
 ---
 
@@ -114,8 +104,8 @@ AZURE_STORAGE_CONNECTION_STRING=your_connection_string_here
 
 ### 5. Upload PDFs to Azure
 
-* Create a container called: `cases`
-* Upload PDFs inside a folder: `pdf/`
+- Create a container called: `cases`  
+- Upload PDFs inside a folder: `pdf/`  
 
 ---
 
@@ -126,9 +116,8 @@ python process_to_sqlite.py
 ```
 
 This will:
-
-* Extract text from PDFs
-* Store data in `legal.db`
+- Extract text from PDFs  
+- Store data in `legal.db`  
 
 ---
 
@@ -166,74 +155,38 @@ http://127.0.0.1:5000/search?q=murder
 
 ## 📌 Features
 
-* Keyword-based legal case search
-* Azure cloud storage integration
-* Local database for fast querying
-* PDF text extraction pipeline
+- Keyword-based legal case search  
+- Azure cloud storage integration  
+- Local database for fast querying  
+- PDF text extraction pipeline  
 
 ---
 
 ## ⚠️ Limitations (Current Version)
 
-* Basic keyword search (no ranking)
-* No pagination
-* Limited metadata extraction
-* No authentication
+- Basic keyword search (no ranking)  
+- No pagination  
+- Limited metadata extraction  
+- No authentication  
 
 ---
 
 ## 🚀 Future Improvements
 
-* 🔥 Full-text search (FTS5 in SQLite)
-* 🔍 Better ranking (BM25 / embeddings)
-* 🌐 UI improvements
-* 📄 Open PDF directly from results
-* ☁️ Move to Cosmos DB / ElasticSearch
+- 🔥 Full-text search (FTS5 in SQLite)  
+- 🔍 Better ranking (BM25 / embeddings)  
+- 🌐 UI improvements  
+- 📄 Open PDF directly from results  
+- ☁️ Move to Cosmos DB / Elasticsearch  
 
 ---
 
 ## 👨‍💻 Author
 
-Rohan Shenoy
+**Rohan Shenoy**
 
 ---
 
 ## ⭐ If you like this project
 
 Give it a star ⭐ on GitHub!
-
-```
-
----
-
-# 💡 Quick feedback on your project
-
-Right now you have:
-
-✅ Azure integration  
-✅ Data pipeline  
-✅ Working backend  
-✅ Search working  
-
-That’s already **internship-level / resume-worthy**.
-
----
-
-# 🔥 Next move (VERY IMPORTANT)
-
-If you want to level this up:
-
-👉 Add **better search (ranking + highlighting)**  
-👉 Add **UI (not raw JSON)**  
-👉 Add **“open PDF” button**
-
----
-
-If you want, I can next:
-
-👉 upgrade your search to **Google-like results**  
-👉 build a **clean frontend UI**  
-👉 or turn this into a **full legal assistant**
-
-Just tell me 👍
-```
