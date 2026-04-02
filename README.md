@@ -1,27 +1,31 @@
-# ⚖️ Legal Case Search Engine (Azure + SQLite)
+# ⚖️ Legal Case Search Engine (Azure + SQLite + FTS)
 
-A simple search engine for Indian legal case documents using Azure Blob Storage, PDF parsing, and SQLite.
+A full-stack legal case search engine that processes Indian legal PDFs, stores them efficiently, and provides fast full-text search with filters and a modern UI.
 
 ---
 
 ## 🚀 Overview
 
-This project builds a mini legal search system that:
+This project builds a **mini legal search engine** that:
 
-1. Stores legal case PDFs in Azure Blob Storage  
-2. Extracts text from PDFs using PyMuPDF  
-3. Stores structured data in SQLite  
-4. Allows keyword-based search using a Flask API  
+1. Stores legal case PDFs in Azure Blob Storage
+2. Extracts text from PDFs using PyMuPDF
+3. Stores structured + indexed data in SQLite
+4. Uses **FTS5 (Full-Text Search)** for fast keyword queries
+5. Provides a **Flask API + frontend UI** for searching cases
+6. Allows filtering by **year and court type**
+7. Lets users **open PDFs directly from results**
 
 ---
 
 ## 🏗️ Tech Stack
 
-- **Backend:** Python (Flask)
-- **Database:** SQLite
-- **Storage:** Azure Blob Storage
-- **PDF Processing:** PyMuPDF (fitz)
-- **Environment Management:** python-dotenv
+* **Backend:** Python (Flask)
+* **Database:** SQLite (with FTS5)
+* **Storage:** Azure Blob Storage
+* **PDF Processing:** PyMuPDF (fitz)
+* **Frontend:** HTML + CSS + JavaScript
+* **Environment Management:** python-dotenv
 
 ---
 
@@ -30,13 +34,13 @@ This project builds a mini legal search system that:
 ```
 digivakil/
 │
-├── app.py                  # Flask API (search endpoint)
-├── process_pdfs.py         # Reads PDFs from Azure (basic preview)
-├── process_to_sqlite.py    # Extracts + stores data in SQLite
+├── app.py                  # Flask app (API + UI routing)
+├── process_pdfs.py         # Basic PDF preview script
+├── process_to_sqlite.py    # Full pipeline (Azure → SQLite + FTS)
 ├── legal.db                # SQLite database (generated)
 ├── templates/
-│   └── index.html          # Basic frontend UI
-├── .env                    # Environment variables (not pushed)
+│   └── index.html          # Styled frontend UI
+├── .env                    # Environment variables (NOT pushed)
 ├── .gitignore
 └── README.md
 ```
@@ -52,13 +56,18 @@ Download PDFs using Azure SDK
 ↓
 Extract text using PyMuPDF
 ↓
-Clean + parse metadata (title, year)
+Extract metadata:
+    - Title (filename)
+    - Year (regex)
+    - Court type (keyword detection)
 ↓
-Store in SQLite database
+Store in SQLite (structured table)
+↓
+Index using FTS5 (full-text search)
 ↓
 Flask API
 ↓
-Search results (JSON / UI)
+Frontend UI (search + filters + PDF open)
 ```
 
 ---
@@ -67,7 +76,7 @@ Search results (JSON / UI)
 
 ### 1. Clone the repository
 
-```bash
+```
 git clone https://github.com/rohanshenoy30/digivakil.git
 cd digivakil
 ```
@@ -76,7 +85,7 @@ cd digivakil
 
 ### 2. Create virtual environment
 
-```bash
+```
 python -m venv venv
 source venv/bin/activate   # Mac/Linux
 venv\Scripts\activate      # Windows
@@ -86,7 +95,7 @@ venv\Scripts\activate      # Windows
 
 ### 3. Install dependencies
 
-```bash
+```
 pip install azure-storage-blob pymupdf flask python-dotenv
 ```
 
@@ -96,7 +105,7 @@ pip install azure-storage-blob pymupdf flask python-dotenv
 
 Create a `.env` file:
 
-```env
+```
 AZURE_STORAGE_CONNECTION_STRING=your_connection_string_here
 ```
 
@@ -104,80 +113,122 @@ AZURE_STORAGE_CONNECTION_STRING=your_connection_string_here
 
 ### 5. Upload PDFs to Azure
 
-- Create a container called: `cases`  
-- Upload PDFs inside a folder: `pdf/`  
+* Create a container: `cases`
+* Upload PDFs inside folder: `pdf/`
 
 ---
 
-### 6. Process PDFs → SQLite
+### 6. Process PDFs → SQLite (with FTS)
 
-```bash
+```
 python process_to_sqlite.py
 ```
 
 This will:
-- Extract text from PDFs  
-- Store data in `legal.db`  
+
+* Extract text from PDFs
+* Detect **year and court type**
+* Store structured data in SQLite
+* Create **FTS5 search index**
 
 ---
 
 ### 7. Run Flask server
 
-```bash
+```
 python app.py
 ```
 
 ---
 
-### 8. Search
-
-Open browser:
+### 8. Open UI
 
 ```
-http://127.0.0.1:5000/search?q=murder
+http://127.0.0.1:5000
 ```
 
 ---
 
-## 🔍 Example Output
+## 🔍 Features
 
-```json
+### ✅ Search
+
+* Full-text search using SQLite FTS5
+* Fast and efficient keyword matching
+
+### ✅ Filters
+
+* Filter by **year**
+* Filter by **court type**
+
+  * Supreme Court
+  * High Court
+  * District Court
+
+### ✅ UI
+
+* Clean modern frontend
+* Styled search interface
+* Scrollable results
+
+### ✅ PDF Access
+
+* Open original case PDF directly from Azure Blob
+
+### ✅ Metadata Extraction
+
+* Title (from filename)
+* Year (regex-based)
+* Court (keyword-based detection)
+
+---
+
+## 🔍 Example API Output
+
+```
 [
   {
-    "title": "STATE OF MAHARASHTRA vs XYZ",
+    "title": "STATE_OF_MAHARASHTRA.pdf",
     "year": 1970,
-    "preview": "Supreme Court of India..."
+    "court": "Supreme Court",
+    "preview": "SUPREME COURT OF INDIA...",
+    "pdf_url": "https://<storage>.blob.core.windows.net/cases/pdf/file.pdf"
   }
 ]
 ```
 
 ---
 
-## 📌 Features
-
-- Keyword-based legal case search  
-- Azure cloud storage integration  
-- Local database for fast querying  
-- PDF text extraction pipeline  
-
----
-
 ## ⚠️ Limitations (Current Version)
 
-- Basic keyword search (no ranking)  
-- No pagination  
-- Limited metadata extraction  
-- No authentication  
+* Basic ranking (no BM25 tuning yet)
+* Metadata extraction is heuristic-based
+* No pagination (limited to top results)
+* No authentication / access control
+* Azure Blob uses public access (for PDF viewing)
 
 ---
 
 ## 🚀 Future Improvements
 
-- 🔥 Full-text search (FTS5 in SQLite)  
-- 🔍 Better ranking (BM25 / embeddings)  
-- 🌐 UI improvements  
-- 📄 Open PDF directly from results  
-- ☁️ Move to Cosmos DB / Elasticsearch  
+* 🔥 Semantic search (OpenAI / embeddings)
+* 🔍 Better ranking (BM25 / hybrid search)
+* 📄 Case summarization using LLMs
+* ☁️ Deploy to cloud (Render / Azure App Service)
+* 🧠 Convert to RAG-based legal assistant
+* 📊 Add analytics (most searched cases)
+* 🔐 Secure PDF access using SAS tokens
+
+---
+
+## 🧠 Key Learning Outcomes
+
+* End-to-end **data pipeline design**
+* Working with **Azure Blob Storage**
+* PDF parsing and text extraction
+* Building **search engines using SQLite FTS**
+* Backend API design with Flask
+* Full-stack integration (UI + API + DB)
 
 ---
 
