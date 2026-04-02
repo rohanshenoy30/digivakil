@@ -1,42 +1,76 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, jsonify, render_template
 import sqlite3
 
 app = Flask(__name__)
 
-def search_cases(query):
+# 🔑 Replace with your storage account name
+STORAGE_ACCOUNT = "legalstoragerohanproject"
+CONTAINER_NAME = "cases"
+
+
+def get_db():
     conn = sqlite3.connect("legal.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/search")
+def search():
+    q = request.args.get("q", "")
+    year = request.args.get("year", "")
+    court = request.args.get("court", "")
+
+    conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
-    SELECT title, year, content
-    FROM cases
-    WHERE content LIKE ?
-    LIMIT 10
-    """, ('%' + query + '%',))
+    # Base SQL
+    sql = """
+    SELECT cases.id, cases.title, cases.year, cases.court,
+           substr(cases.content, 1, 300) as preview
+    FROM cases_fts
+    JOIN cases ON cases.id = cases_fts.id
+    WHERE cases_fts MATCH ?
+    """
 
-    results = cursor.fetchall()
-    conn.close()
+    params = [q if q else "*"]
 
-    output = []
-    for row in results:
-        output.append({
-            "title": row[0],
-            "year": row[1],
-            "preview": row[2][:300]
-        })
+    # Filters
+    if year:
+        sql += " AND cases.year = ?"
+        params.append(year)
 
-    return output
+    if court:
+        sql += " AND cases.court = ?"
+        params.append(court)
 
+    sql += " LIMIT 20"
 
-@app.route("/", methods=["GET", "POST"])
-def home():
     results = []
 
-    if request.method == "POST":
-        query = request.form.get("query")
-        results = search_cases(query)
+    try:
+        for row in cursor.execute(sql, params):
 
-    return render_template("index.html", results=results)
+            pdf_url = f"https://{STORAGE_ACCOUNT}.blob.core.windows.net/{CONTAINER_NAME}/{row['id']}"
+
+            results.append({
+                "title": row["title"],
+                "year": row["year"],
+                "court": row["court"],
+                "preview": row["preview"],
+                "pdf_url": pdf_url
+            })
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+    conn.close()
+
+    return jsonify(results)
 
 
 if __name__ == "__main__":
