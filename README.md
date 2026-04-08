@@ -266,22 +266,6 @@ node server.js
 
 ---
 
-## 🔍 Example API Output
-
-```
-
-[
-{
-"title": "STATE_OF_MAHARASHTRA.pdf",
-"year": 1970,
-"court": "Supreme Court",
-"preview": "SUPREME COURT OF INDIA...",
-"content": "Full extracted case text...",
-"pdf_url": "https://<storage>.blob.core.windows.net/cases/pdf/file.pdf"
-}
-]
-
-```
 
 ---
 
