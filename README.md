@@ -1,4 +1,4 @@
-```markdown
+
 # ⚖️ Legal Case Search Engine + AI Chatbot (DigiVakil)
 
 A full-stack legal case search engine that processes Indian legal PDFs, enables fast full-text search, and now includes an **AI-powered chatbot and case summarizer**.
