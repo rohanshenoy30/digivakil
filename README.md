@@ -1,12 +1,13 @@
-# ⚖️ Legal Case Search Engine (Azure + SQLite + FTS)
+```markdown
+# ⚖️ Legal Case Search Engine + AI Chatbot (DigiVakil)
 
-A full-stack legal case search engine that processes Indian legal PDFs, stores them efficiently, and provides fast full-text search with filters and a modern UI.
+A full-stack legal case search engine that processes Indian legal PDFs, enables fast full-text search, and now includes an **AI-powered chatbot and case summarizer**.
 
 ---
 
 ## 🚀 Overview
 
-This project builds a **mini legal search engine** that:
+This project builds a **mini legal search engine + AI assistant** that:
 
 1. Stores legal case PDFs in Azure Blob Storage
 2. Extracts text from PDFs using PyMuPDF
@@ -15,12 +16,15 @@ This project builds a **mini legal search engine** that:
 5. Provides a **Flask API + frontend UI** for searching cases
 6. Allows filtering by **year and court type**
 7. Lets users **open PDFs directly from results**
+8. Integrates **Gemini AI chatbot (Node.js backend)**
+9. Enables **case-specific Q&A and summarization**
 
 ---
 
 ## 🏗️ Tech Stack
 
-* **Backend:** Python (Flask)
+* **Backend (Search API):** Python (Flask)
+* **AI Backend:** Node.js (Express + Gemini API)
 * **Database:** SQLite (with FTS5)
 * **Storage:** Azure Blob Storage
 * **PDF Processing:** PyMuPDF (fitz)
@@ -32,17 +36,21 @@ This project builds a **mini legal search engine** that:
 ## 📂 Project Structure
 
 ```
+
 digivakil/
 │
-├── app.py                  # Flask app (API + UI routing)
+├── app.py                  # Flask app (search API + UI)
+├── server.js               # Node.js server (AI chatbot + summarizer)
 ├── process_pdfs.py         # Basic PDF preview script
 ├── process_to_sqlite.py    # Full pipeline (Azure → SQLite + FTS)
 ├── legal.db                # SQLite database (generated)
 ├── templates/
-│   └── index.html          # Styled frontend UI
-├── .env                    # Environment variables (NOT pushed)
+│   └── index.html          # Frontend UI (search + chatbot)
+├── venv/                   # Python virtual environment
+├── .env                    # Environment variables
 ├── .gitignore
 └── README.md
+
 ```
 
 ---
@@ -50,6 +58,7 @@ digivakil/
 ## 🔄 Pipeline Flow
 
 ```
+
 Azure Blob Storage (PDFs)
 ↓
 Download PDFs using Azure SDK
@@ -57,17 +66,22 @@ Download PDFs using Azure SDK
 Extract text using PyMuPDF
 ↓
 Extract metadata:
-    - Title (filename)
-    - Year (regex)
-    - Court type (keyword detection)
+- Title (filename)
+- Year (regex)
+- Court type (keyword detection)
 ↓
 Store in SQLite (structured table)
 ↓
 Index using FTS5 (full-text search)
 ↓
-Flask API
+Flask API (search + filters)
 ↓
-Frontend UI (search + filters + PDF open)
+Frontend UI
+↓
+Node.js AI Backend (Gemini)
+↓
+Case Q&A + Summarization
+
 ```
 
 ---
@@ -77,51 +91,70 @@ Frontend UI (search + filters + PDF open)
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/rohanshenoy30/digivakil.git
+
+git clone [https://github.com/rohanshenoy30/digivakil.git](https://github.com/rohanshenoy30/digivakil.git)
 cd digivakil
+
 ```
 
 ---
 
-### 2. Create virtual environment
+### 2. Activate virtual environment
 
 ```
-python -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
-```
 
----
+source /Users/rohanshenoy/Desktop/digivakil/venv/bin/activate
 
-### 3. Install dependencies
-
-```
-pip install azure-storage-blob pymupdf flask python-dotenv
 ```
 
 ---
 
-### 4. Setup environment variables
+### 3. Install Python dependencies
+
+```
+
+pip install azure-storage-blob pymupdf flask python-dotenv flask-cors
+
+```
+
+---
+
+### 4. Install Node dependencies
+
+```
+
+npm install express cors dotenv @google/generative-ai
+
+```
+
+---
+
+### 5. Setup environment variables
 
 Create a `.env` file:
 
 ```
+
 AZURE_STORAGE_CONNECTION_STRING=your_connection_string_here
+GEMINI_API_KEY=your_gemini_api_key
+
 ```
 
 ---
 
-### 5. Upload PDFs to Azure
+### 6. Upload PDFs to Azure
 
 * Create a container: `cases`
 * Upload PDFs inside folder: `pdf/`
 
 ---
 
-### 6. Process PDFs → SQLite (with FTS)
+### 7. Process PDFs → SQLite (with FTS)
 
 ```
+
 python process_to_sqlite.py
+
 ```
 
 This will:
@@ -133,28 +166,44 @@ This will:
 
 ---
 
-### 7. Run Flask server
+### 8. Run servers
+
+#### Start Flask (Search API)
 
 ```
+
 python app.py
+
+```
+
+#### Start Node.js (AI Chatbot)
+
+```
+
+node server.js
+
 ```
 
 ---
 
-### 8. Open UI
+### 9. Open UI
 
 ```
-http://127.0.0.1:5000
+
+[http://127.0.0.1:5000](http://127.0.0.1:5000)
+
 ```
 
 ---
 
 ## 🔍 Features
 
-### ✅ Search
+### ✅ Search Engine
 
 * Full-text search using SQLite FTS5
-* Fast and efficient keyword matching
+* Fast keyword-based retrieval
+
+---
 
 ### ✅ Filters
 
@@ -165,59 +214,98 @@ http://127.0.0.1:5000
   * High Court
   * District Court
 
+---
+
 ### ✅ UI
 
 * Clean modern frontend
-* Styled search interface
-* Scrollable results
+* Interactive search interface
+* Scrollable case results
+
+---
 
 ### ✅ PDF Access
 
-* Open original case PDF directly from Azure Blob
+* Open original case PDFs directly from Azure Blob Storage
 
-### ✅ Metadata Extraction
+---
 
-* Title (from filename)
-* Year (regex-based)
-* Court (keyword-based detection)
+### 🤖 AI Chatbot (NEW)
+
+* Global chatbot for general legal queries
+* Powered by **Google Gemini API**
+* Handles natural language questions
+
+---
+
+### ⚖️ Case-Specific AI Q&A (NEW)
+
+* Ask questions about a specific case
+* Uses **case content as context**
+* Provides:
+  * Explanation of case
+  * Legal reasoning
+  * Key outcomes
+
+---
+
+### 📄 AI Case Summarization (NEW)
+
+* Automatically summarizes judgments
+* Supports prompts like:
+  * “Summarize this case”
+  * “Explain in 5 bullet points”
+* Converts long legal text into readable insights
+
+---
+
+### 🧠 Intelligent Context Handling
+
+* Sends case content to AI model
+* Enables contextual answers instead of generic responses
 
 ---
 
 ## 🔍 Example API Output
 
 ```
+
 [
-  {
-    "title": "STATE_OF_MAHARASHTRA.pdf",
-    "year": 1970,
-    "court": "Supreme Court",
-    "preview": "SUPREME COURT OF INDIA...",
-    "pdf_url": "https://<storage>.blob.core.windows.net/cases/pdf/file.pdf"
-  }
+{
+"title": "STATE_OF_MAHARASHTRA.pdf",
+"year": 1970,
+"court": "Supreme Court",
+"preview": "SUPREME COURT OF INDIA...",
+"content": "Full extracted case text...",
+"pdf_url": "https://<storage>.blob.core.windows.net/cases/pdf/file.pdf"
+}
 ]
+
 ```
 
 ---
 
 ## ⚠️ Limitations (Current Version)
 
+* Gemini API may return **503 errors under high load**
+* Large case files may be truncated
 * Basic ranking (no BM25 tuning yet)
 * Metadata extraction is heuristic-based
-* No pagination (limited to top results)
+* No pagination
 * No authentication / access control
-* Azure Blob uses public access (for PDF viewing)
 
 ---
 
 ## 🚀 Future Improvements
 
-* 🔥 Semantic search (OpenAI / embeddings)
-* 🔍 Better ranking (BM25 / hybrid search)
-* 📄 Case summarization using LLMs
-* ☁️ Deploy to cloud (Render / Azure App Service)
-* 🧠 Convert to RAG-based legal assistant
-* 📊 Add analytics (most searched cases)
+* 🔥 Semantic search (embeddings + vector DB)
+* 🔍 Hybrid ranking (BM25 + semantic)
+* 📄 Better summarization pipelines (chunking + RAG)
+* ☁️ Cloud deployment (Azure / Render)
+* 🧠 Full RAG-based legal assistant
+* 📊 Search analytics dashboard
 * 🔐 Secure PDF access using SAS tokens
+* ⚡ Streaming responses (ChatGPT-style UI)
 
 ---
 
@@ -227,8 +315,9 @@ http://127.0.0.1:5000
 * Working with **Azure Blob Storage**
 * PDF parsing and text extraction
 * Building **search engines using SQLite FTS**
-* Backend API design with Flask
-* Full-stack integration (UI + API + DB)
+* Integrating **AI (LLMs) into applications**
+* Handling **real-world API issues (rate limits, retries)**
+* Full-stack system design (DB + API + AI + UI)
 
 ---
 
@@ -241,3 +330,4 @@ http://127.0.0.1:5000
 ## ⭐ If you like this project
 
 Give it a star ⭐ on GitHub!
+```
