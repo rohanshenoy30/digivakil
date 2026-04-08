@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Legal Search Engine</title>
+    <title>Legal Case Search + AI Chatbot</title>
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
 
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background: #f5f7fb;
-            margin: 0;
             padding: 40px;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 30px;
         }
 
         .search-box {
@@ -27,77 +24,51 @@
         }
 
         input, select {
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             border: 1px solid #ccc;
-            width: 200px;
         }
 
         button {
-            padding: 12px 20px;
-            border: none;
+            padding: 10px;
             background: #4a6cf7;
             color: white;
+            border: none;
             border-radius: 8px;
             cursor: pointer;
-        }
-
-        button:hover {
-            background: #3b5be0;
-        }
-
-        .results {
-            max-width: 800px;
-            margin: auto;
         }
 
         .card {
             background: white;
             padding: 20px;
-            margin-bottom: 20px;
+            margin: 15px auto;
+            max-width: 800px;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
-        .title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
         .meta {
+            color: gray;
             font-size: 14px;
-            color: #777;
-            margin-top: 5px;
         }
 
-        .preview {
-            margin-top: 10px;
-            color: #333;
-        }
-
-        .link {
-            margin-top: 12px;
-            display: inline-block;
-            color: #4a6cf7;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .link:hover {
-            text-decoration: underline;
-        }
-
-        .loader {
-            text-align: center;
-            display: none;
+        .chatbox {
+            margin-top: 40px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
         }
     </style>
 </head>
 
 <body>
 
-<h1>⚖️ Legal Case Search</h1>
+<h1>⚖️ Legal Case Search + AI Chatbot</h1>
 
+<!-- SEARCH -->
 <div class="search-box">
     <input type="text" id="query" placeholder="Search cases...">
     <input type="text" id="year" placeholder="Year">
@@ -112,36 +83,35 @@
     <button onclick="search()">Search</button>
 </div>
 
-<div class="loader" id="loader">🔍 Searching...</div>
+<div id="results"></div>
 
-<div class="results" id="results"></div>
+<!-- GLOBAL CHAT -->
+<div class="chatbox">
+    <h2>🤖 AI Chatbot</h2>
+
+    <input id="chatInput" placeholder="Ask anything..." style="width:70%;padding:10px;">
+    <button onclick="sendMessage()">Send</button>
+
+    <div id="chatBox" style="margin-top:20px;"></div>
+</div>
 
 <script>
-async function search() {
 
+// ---------------- SEARCH (Flask) ----------------
+async function search() {
     const q = document.getElementById("query").value;
     const year = document.getElementById("year").value;
     const court = document.getElementById("court").value;
 
     let url = `/search?q=${q}`;
-
     if (year) url += `&year=${year}`;
     if (court) url += `&court=${court}`;
-
-    document.getElementById("loader").style.display = "block";
 
     const res = await fetch(url);
     const data = await res.json();
 
-    document.getElementById("loader").style.display = "none";
-
     const resultsDiv = document.getElementById("results");
     resultsDiv.innerHTML = "";
-
-    if (data.length === 0) {
-        resultsDiv.innerHTML = "<p>No results found 😢</p>";
-        return;
-    }
 
     data.forEach(item => {
 
@@ -149,15 +119,74 @@ async function search() {
         div.className = "card";
 
         div.innerHTML = `
-            <div class="title">${item.title}</div>
+            <div><b>${item.title}</b></div>
             <div class="meta">${item.court} • ${item.year}</div>
-            <div class="preview">${item.preview}...</div>
-            <a class="link" href="${item.pdf_url}" target="_blank">📄 View Judgment</a>
+            <div>${item.preview}...</div>
+
+            <a href="${item.pdf_url}" target="_blank">📄 View Judgment</a>
+
+            <br><br>
+
+            <input type="text" id="q-${item.id}" placeholder="Ask about this case...">
+            <button onclick="askCaseQuestion('${item.id}', \`${item.preview}\`)">Ask</button>
+
+            <div id="ans-${item.id}" style="margin-top:10px;"></div>
         `;
 
         resultsDiv.appendChild(div);
     });
 }
+
+
+// ---------------- GLOBAL CHAT ----------------
+async function sendMessage() {
+    const input = document.getElementById("chatInput");
+    const chatBox = document.getElementById("chatBox");
+
+    const message = input.value;
+
+    chatBox.innerHTML += `<p><b>You:</b> ${message}</p>`;
+    input.value = "";
+
+    const res = await fetch("http://127.0.0.1:3000/chat", {  // ✅ FIXED
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: message })
+    });
+
+    const data = await res.json();
+
+    chatBox.innerHTML += `<p><b>Gemini:</b> ${data.reply}</p>`;
+}
+
+
+// ---------------- CASE CHAT ----------------
+async function askCaseQuestion(caseId, context) {
+    const input = document.getElementById(`q-${caseId}`);
+    const answerDiv = document.getElementById(`ans-${caseId}`);
+
+    const question = input.value;
+
+    answerDiv.innerHTML = "⏳ Thinking...";
+
+    const res = await fetch("http://127.0.0.1:3000/case-chat", {  // ✅ FIXED
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            question: question,
+            context: context
+        })
+    });
+
+    const data = await res.json();
+
+    answerDiv.innerHTML = data.answer;
+}
+
 </script>
 
 </body>
