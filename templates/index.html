@@ -60,6 +60,7 @@
             padding: 10px;
             border-radius: 10px;
             background: #fafafa;
+            margin-bottom: 10px;
         }
 
         .chat-message {
@@ -177,7 +178,13 @@ async function search() {
             <div class="chat-container" id="chat-${item.id}"></div>
 
             <input type="text" id="q-${item.id}" placeholder="Ask about this case...">
-            <button onclick="askCaseQuestion('${item.id}', \`${item.content}\`)">Ask</button>
+            
+            <button 
+                data-preview="${encodeURIComponent(item.preview || '')}"
+                data-content="${encodeURIComponent(item.content || '')}"
+                onclick="askCaseQuestion('${item.id}', this)">
+                Ask
+            </button>
         `;
 
         resultsDiv.appendChild(div);
@@ -239,12 +246,26 @@ async function sendMessage() {
 
 
 // ---------------- CASE CHAT ----------------
-async function askCaseQuestion(caseId, context) {
+async function askCaseQuestion(caseId, button) {
     const input = document.getElementById(`q-${caseId}`);
     const chatBox = document.getElementById(`chat-${caseId}`);
 
     const question = input.value;
     if (!question) return;
+
+    const preview = decodeURIComponent(button.getAttribute("data-preview") || "");
+    const content = decodeURIComponent(button.getAttribute("data-content") || "");
+
+    // SMART CONTEXT
+    let context = preview;
+
+    if (
+        question.toLowerCase().includes("detail") ||
+        question.toLowerCase().includes("explain") ||
+        question.toLowerCase().includes("full")
+    ) {
+        context = content.slice(0, 5000);
+    }
 
     const userMsg = document.createElement("div");
     userMsg.className = "chat-message user";
