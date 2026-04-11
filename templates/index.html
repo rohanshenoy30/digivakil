@@ -52,6 +52,41 @@
             font-size: 14px;
         }
 
+        /* CHAT UI */
+        .chat-container {
+            height: 250px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .chat-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 12px;
+            max-width: 70%;
+        }
+
+        .user {
+            background: #4a6cf7;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .bot {
+            background: #e5e7eb;
+            color: black;
+            margin-right: auto;
+        }
+
+        .typing {
+            font-style: italic;
+            color: gray;
+        }
+
         .chatbox {
             margin-top: 40px;
             max-width: 800px;
@@ -60,6 +95,16 @@
             background: white;
             padding: 20px;
             border-radius: 12px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
         }
     </style>
 </head>
@@ -89,15 +134,17 @@
 <div class="chatbox">
     <h2>🤖 AI Chatbot</h2>
 
-    <input id="chatInput" placeholder="Ask anything..." style="width:70%;padding:10px;">
-    <button onclick="sendMessage()">Send</button>
+    <div id="chatBox" class="chat-container"></div>
 
-    <div id="chatBox" style="margin-top:20px;"></div>
+    <div class="chat-input">
+        <input id="chatInput" placeholder="Ask anything...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
 </div>
 
 <script>
 
-// ---------------- SEARCH (Flask) ----------------
+// ---------------- SEARCH ----------------
 async function search() {
     const q = document.getElementById("query").value;
     const year = document.getElementById("year").value;
@@ -127,10 +174,10 @@ async function search() {
 
             <br><br>
 
-            <input type="text" id="q-${item.id}" placeholder="Ask about this case...">
-            <button onclick="askCaseQuestion('${item.id}', \`${item.preview}\`)">Ask</button>
+            <div class="chat-container" id="chat-${item.id}"></div>
 
-            <div id="ans-${item.id}" style="margin-top:10px;"></div>
+            <input type="text" id="q-${item.id}" placeholder="Ask about this case...">
+            <button onclick="askCaseQuestion('${item.id}', \`${item.content}\`)">Ask</button>
         `;
 
         resultsDiv.appendChild(div);
@@ -144,47 +191,103 @@ async function sendMessage() {
     const chatBox = document.getElementById("chatBox");
 
     const message = input.value;
+    if (!message) return;
 
-    chatBox.innerHTML += `<p><b>You:</b> ${message}</p>`;
+    const userDiv = document.createElement("div");
+    userDiv.className = "chat-message user";
+    userDiv.innerText = message;
+    chatBox.appendChild(userDiv);
+
     input.value = "";
 
-    const res = await fetch("http://127.0.0.1:3000/chat", {  // ✅ FIXED
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ message: message })
-    });
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "chat-message bot typing";
+    typingDiv.innerText = "Gemini is typing...";
+    chatBox.appendChild(typingDiv);
 
-    const data = await res.json();
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-    chatBox.innerHTML += `<p><b>Gemini:</b> ${data.reply}</p>`;
+    try {
+        const res = await fetch("http://127.0.0.1:3000/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        const data = await res.json();
+
+        chatBox.removeChild(typingDiv);
+
+        const botDiv = document.createElement("div");
+        botDiv.className = "chat-message bot";
+        botDiv.innerText = data.reply;
+        chatBox.appendChild(botDiv);
+
+    } catch (err) {
+        chatBox.removeChild(typingDiv);
+
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "chat-message bot";
+        errorDiv.innerText = "⚠️ Error. Try again.";
+        chatBox.appendChild(errorDiv);
+    }
+
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 
 // ---------------- CASE CHAT ----------------
 async function askCaseQuestion(caseId, context) {
     const input = document.getElementById(`q-${caseId}`);
-    const answerDiv = document.getElementById(`ans-${caseId}`);
+    const chatBox = document.getElementById(`chat-${caseId}`);
 
     const question = input.value;
+    if (!question) return;
 
-    answerDiv.innerHTML = "⏳ Thinking...";
+    const userMsg = document.createElement("div");
+    userMsg.className = "chat-message user";
+    userMsg.innerText = question;
+    chatBox.appendChild(userMsg);
 
-    const res = await fetch("http://127.0.0.1:3000/case-chat", {  // ✅ FIXED
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            question: question,
-            context: context
-        })
-    });
+    const typing = document.createElement("div");
+    typing.className = "chat-message bot typing";
+    typing.innerText = "Thinking...";
+    chatBox.appendChild(typing);
 
-    const data = await res.json();
+    try {
+        const res = await fetch("http://127.0.0.1:3000/case-chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: question,
+                context: context
+            })
+        });
 
-    answerDiv.innerHTML = data.answer;
+        const data = await res.json();
+
+        chatBox.removeChild(typing);
+
+        const botMsg = document.createElement("div");
+        botMsg.className = "chat-message bot";
+        botMsg.innerText = data.answer;
+        chatBox.appendChild(botMsg);
+
+    } catch (err) {
+        chatBox.removeChild(typing);
+
+        const errorMsg = document.createElement("div");
+        errorMsg.className = "chat-message bot";
+        errorMsg.innerText = "⚠️ Error";
+        chatBox.appendChild(errorMsg);
+    }
+
+    input.value = "";
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 </script>
